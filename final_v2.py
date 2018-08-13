@@ -11,8 +11,6 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.feature_selection import SelectKBest, chi2
 import numpy as np
-# olderr = np.seterr(all='ignore') 
-
 
 
 # 从整个训练集数据集中抽取部分数据作为训练模型的训练集数据和测试集数据，并且指定要使用的目标变量
@@ -61,67 +59,6 @@ def input_data(train_file,divide_number,end_number,tags):
     # 返回构建的训练集输入，训练集目标变量，测试集输入，测试集目标变量
     return train_words, train_tags, test_words, test_tags
 
- 
-# 对训练集文件和测试集文件进行处理，产生训练集输入、训练集目标变量、测试集输入
-# 这一步是在我们训练好模型之后，要对比赛的数据进行预测的时候才进行的
-# 当然，我们这里并不是比赛，所以这一个函数对我们来说并没有什么用
-# 但是我们可以了解一下作者的思路，想一想我们在比赛的时候会怎么做
-'''def input_data_write_tags(train_file, test_file,tags):
-    train_words = []
-    train_tags=[]
-    test_words = []
-
-    with open(train_file, 'r',encoding='gb18030') as f:
-        text=f.readlines()
-        train_data=text[0:]   
-        for single_query in train_data:
-            single_query_list = single_query.split(' ')
-            single_query_list.pop(0)
-            train_tags.append(single_query_list[tags])
-            single_query_list.pop(0)
-            single_query_list.pop(0)
-            single_query_list.pop(0)
-            train_words.append((str(single_query_list)).replace(',',' ').replace('\'','').lstrip('[').rstrip(']').replace('\\n',''))
-
-    with open(test_file, 'r') as f:
-        text=f.readlines()
-        test_data=text[0:]
-        for single_query in test_data:
-            single_query_list = single_query.split(' ')
-            single_query_list.pop(0)
-            test_words.append((str(single_query_list)).replace(',',' ').replace('\'','').lstrip('[').rstrip(']').replace('\\n',''))
-            
-   
-    print('input_data done!')
-    return train_words, train_tags,test_words'''
-
- 
-'''def write_test_tags(test_file,test_tags_age,test_tags_gender,test_tags_education):
-    test_ID=[]
-    with open(test_file,'r') as test_data:
-        for single_query in test_data:
-            single_query_list=single_query.split(' ')
-            test_ID.append(single_query_list[0])
-
-    with open('test_tags_file_cv_hv_chi2_59000_15000_13500.csv','w',encoding='gbk') as test_tags_file:
-        for x in range(0,len(test_tags_age)):
-            test_tags_file.write(test_ID[x]+' '+test_tags_age[x]+' '+test_tags_gender[x]+' '+test_tags_education[x]+'\n')  '''
-  
-
-# 简单的词频统计，包含的信息少，不建议使用，本项目中使用的是 tf-idf
-'''def vectorize(train_words,test_words,n_feature):
-    print ('*************************HashingVectorizer*************************')  
-    v = HashingVectorizer(n_features=n_feature,non_negative =True)
-    print("n_features:%d"%n_feature)
-    train_data = v.fit_transform(train_words)
-    test_data = v.fit_transform(test_words)
-    print ("the shape of train is "+repr(train_data.shape))
-    print ("the shape of test is "+repr(test_data.shape)) 
-    
-     
-    return train_data, test_data
-    #print('vectorize done!')'''
-    
     
 # 将训练集数据和测试集数据转换为 tf-idf 特征矩阵，然后使用 chi2 进行特征选择
 def tfidf_vectorize_1(train_words, train_tags, test_words, n_dimensionality):
@@ -141,38 +78,6 @@ def tfidf_vectorize_1(train_words, train_tags, test_words, n_dimensionality):
     return  train_data, test_data
 
 
-'''def tfidf_vectorize(train_words,train_tags,test_words,test_tags,n_dimensionality):
-    #method 2:TfidfVectorizer  
-    print ('*************************TfidfVectorizer+chi2*************************')   
-    t0=time()
-    tv = TfidfVectorizer(sublinear_tf = True) # 
-                                          
-    tfidf_train_2 = tv.fit_transform(train_words);  #得到矩阵
-    # tv2 = TfidfVectorizer(vocabulary = tv.vocabulary_);  
-    tfidf_test_2 = tv.transform(test_words);  
-    print ("the shape of train is "+repr(tfidf_train_2.shape))  
-    print ("the shape of test is "+repr(tfidf_test_2.shape))
-    train_data,test_data=feature_selection_chi2(tfidf_train_2,train_tags,tfidf_test_2,n_dimensionality) 
-    print("done in %0.3fs." % (time() - t0))
-    return  train_data,test_data'''
-
-
-# hash vectorie 提供的信息较少，所以并不建议使用这种方法。
-'''def feature_union_tv_hv(train_words,train_tags,test_words,test_tags,n_feature,n_dimensionality):
-    print('*************************feature_union_tv_hv*************************')
-    hv = HashingVectorizer(n_features=n_feature,non_negative =True)
-    tv1 = TfidfVectorizer(sublinear_tf = True,  max_df = 0.5) #
-    train_combined_features = FeatureUnion([('hv',hv),('tv1',tv1)])
-    train_data=train_combined_features.fit_transform(train_words)
-    print ("the shape of train is "+repr(train_data.shape))  
-    tv2 = TfidfVectorizer(vocabulary = tv1.vocabulary_ ) 
-    test_combined_features = FeatureUnion([('hv',hv),('tv2',tv2)])  
-    test_data=test_combined_features.fit_transform(test_words)
-    print ("the shape of train is "+repr(test_data.shape)) 
-    train_data,test_data=feature_selection_chi2(train_data,train_tags,test_data,n_dimensionality) 
-    return train_data,test_data'''
-
-
 # 使用两种方式进行特征提取，然后将这两种方式的结果合并起来
 # 第一种方式是使用 TFIDF 提取特征，然后进行 LDA 降维
 # 第二种方式是使用 TFIDF 提取特征，然后使用 chi2 进行特征选择
@@ -190,16 +95,6 @@ def feature_union_lda_tv(train_words,test_words,train_tags,n_dimensionality,n_to
     test_data=bmat([[test_data_lda_normalize, test_data_tv]])
     return train_data,test_data
 
-    
-# 函数为被使用
-'''def sgd_single(train_data,test_data,train_tags):
-    print ('*************************\nSVM\n*************************' )
-    clf = linear_model.SGDClassifier()
-    clf.fit(train_data,train_tags)  
-    pred_tags = clf.predict(test_data) 
-    print('clf done!')
-    return pred_tags    
-'''
     
 # 使用支持向量机来进行分类
 # 先用训练集数据训练模型，然后对测试集数据进行预测
@@ -295,34 +190,6 @@ def test_single(tags,n_dimensionality,n_topics):
     test_tags_prediction=SVM_single(train_data,test_data,train_tags)
     #计算正确率
     evaluate_single(np.asarray(test_tags), test_tags_prediction)
-
-
-# 下面的函数有错误：函数中并没有创建 test_tags 这个变量，但是竟然调用了这个变量
-'''def write_single(train_file,test_file,tags,n_dimensionality,n_topics):
-    n_feature=320000
-    train_words, train_tags, test_words = input_data_write_tags(train_file, test_file,tags)
-    # #向量化
-    # #hv
-    #train_data,test_data = vectorize(train_words,test_words,n_feature)
-    # #tv
-    train_data,test_data= tfidf_vectorize(train_words,train_tags,test_words,test_tags,n_dimensionality)
- 	#lda_tv
-    #train_data,test_data=feature_union_lda_tv(train_words,test_words,train_tags,test_tags,n_dimensionality,n_topics)
-    #tv_hv 
-    #train_data,test_data = feature_union_tv_hv(train_words,train_tags,test_words,test_tags,n_feature,n_dimensionality)
-    
-    test_tags_pre=SVM_single(train_data,test_data,train_tags)
-    return test_tags_pre'''
-
-
-# 对测试集数据进行预测，并且将预测结果保存到文件中
-'''def write():
-    train_file='train_data_fenci.txt'
-    test_file = 'test_data_fenci.txt'
-    test_tags_age_pred=write_single(train_file,test_file,0,59000,50)
-    test_tags_gender_pred=write_single_1(train_file,test_file,1,15000,50)
-    test_tags_education_pred=write_single(train_file,test_file,2,135000,50)
-    write_test_tags(test_file,test_tags_age_pred,test_tags_gender_pred,test_tags_education_pred)'''
 
 
 #########################################
