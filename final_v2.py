@@ -167,24 +167,21 @@ def test():
 
 
 # 对指定的目标变量（age，Gender，Education）进行测试
-# 在最后的实现中，n_dimensionality 和 n_topics 都没有被用到
-# 但是它们应该被用到，因为处理后的数据的特征的数量太大了，这样所需要的训练时间会非常长
-# 因此，我们应该对特征进行适当处理，例如特征选择、降维等等
 def test_single(tags,n_dimensionality,n_topics):
     train_file = 'train_data_fenci.txt'
     # 测试集起始样本位置
     divide_number=15500
     # 测试集终止样本位置
-    end_number=17633#17633
-    # n_feature=320000
+    end_number=17633
+
     print('file:'+train_file)
     print('tags:%d   ' % tags )
     # tag="age"
     #将数据分为训练与测试，获取训练与测试数据的标签
     train_words, train_tags, test_words, test_tags = input_data(train_file,divide_number,end_number,tags)
-    # 方法一：tv + 卡方选择，选择指定数量的最重要的那些特征
+    # 方法一：tv + 卡方选择，选择指定数量的最重要的那些特征，运行时间 1 小时左右
     # train_data,test_data= tfidf_vectorize_1(train_words, train_tags, test_words, n_dimensionality)
- 	# 方法二：tv + 卡方选择，tv + LDA，然后进行特征融合
+ 	# 方法二：tv + 卡方选择，tv + LDA，然后进行特征融合，运行时间一个半小时左右
     train_data,test_data=feature_union_lda_tv(train_words,test_words,train_tags,n_dimensionality,n_topics)
     
     test_tags_prediction=SVM_single(train_data,test_data,train_tags)
@@ -193,11 +190,11 @@ def test_single(tags,n_dimensionality,n_topics):
 
 
 #########################################
+# 使用 GridSearch 找到最好的参数
 def optimize_single(tags):
     train_file = 'train_data_fenci.txt'
     devide_number=15000
-    end_number=17633#17633
-    # n_feature=1000
+    end_number=17633
     print('file:'+train_file)
     print('tags:%d   ' %tags )
     train_words, train_tags,test_words, test_tags = input_data(train_file,devide_number,end_number,tags)
@@ -223,8 +220,8 @@ def optimize_single(tags):
     grid_search = GridSearchCV(pipeline,parameters,n_jobs =6,verbose=1);  
     print("Performing grid search...")  
     print("pipeline:", [name for name, _ in pipeline.steps])  
-    print("parameters:")  
-    #pprint(parameters)  
+    print("parameters:")
+    print(parameters)
   
     grid_search.fit(train_words, train_tags)  
     print("Best score: %0.3f" % grid_search.best_score_)  
@@ -244,6 +241,7 @@ def main():
     # 如果第一个参数是 test，那么对3个目标变量分别进行测试，看看分类效果如何
     if(sys.argv[1]=="test"):
         test()
+    # 如果第一个参数是 optimize，那么就进行参数优化，找到最好的参数
     if(sys.argv[1]=="optimize"):
    		optimize()
 
