@@ -173,16 +173,18 @@ def tfidf_vectorize_1(train_words, train_tags, test_words, n_dimensionality):
     return train_data,test_data'''
 
 
-# 先用 TFIDF 构建特征矩阵，然后使用 lda 对特征矩阵进行降维
-def feature_union_lda_tv(train_words,test_words,train_tags,test_tags,n_dimensionality,n_topics):
- 	#LDA主题提取
+# 使用两种方式进行特征提取，然后将这两种方式的结果合并起来
+# 第一种方式是使用 TFIDF 提取特征，然后进行 LDA 降维
+# 第二种方式是使用 TFIDF 提取特征，然后使用 chi2 进行特征选择
+def feature_union_lda_tv(train_words,test_words,train_tags,n_dimensionality,n_topics):
+ 	# LDA主题提取
     print('*************************feature_union_lda_tv*************************')
     train_data_lda,test_data_lda = LDA(train_words,test_words,n_topics)
-     #归一化lda
+    # 归一化lda
     train_data_lda_normalize=preprocessing.normalize(train_data_lda, norm='l2')
     test_data_lda_normalize=preprocessing.normalize(test_data_lda, norm='l2')
     # #向量化
-    train_data_tv,test_data_tv = tfidf_vectorize(train_words,train_tags,test_words,test_tags,n_dimensionality)  
+    train_data_tv,test_data_tv = tfidf_vectorize_1(train_words,train_tags,test_words,n_dimensionality)  
     #特征矩阵合并
     train_data=bmat([[train_data_lda_normalize, train_data_tv]])
     test_data=bmat([[test_data_lda_normalize, test_data_tv]])
@@ -235,7 +237,7 @@ def feature_selection_chi2(train_data,train_tags,test_data,n_dimensionality):
     return train_data  , test_data 
 
 
-# 使用 LDA 对特征进行降维
+# 先用 TFIDF 构建特征矩阵，然后使用 lda 对特征矩阵进行降维
 def LDA(train_words,test_words,n_topics):
     print("Extracting tf features for LDA...")
     # max_df 和 min_df 决定了忽略什么词语
@@ -287,8 +289,8 @@ def test_single(tags,n_dimensionality,n_topics):
     train_words, train_tags, test_words, test_tags = input_data(train_file,divide_number,end_number,tags)
     # 方法一：tv + 卡方选择，选择指定数量的最重要的那些特征
     # train_data,test_data= tfidf_vectorize_1(train_words, train_tags, test_words, n_dimensionality)
- 	# 方法二：tv + lda
-    train_data,test_data=feature_union_lda_tv(train_words,test_words,train_tags,test_tags,n_dimensionality,n_topics)
+ 	# 方法二：tv + 卡方选择，tv + LDA，然后进行特征融合
+    train_data,test_data=feature_union_lda_tv(train_words,test_words,train_tags,n_dimensionality,n_topics)
     
     test_tags_prediction=SVM_single(train_data,test_data,train_tags)
     #计算正确率
